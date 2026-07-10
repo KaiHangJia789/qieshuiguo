@@ -35,8 +35,9 @@ jobs:
 
       - name: 编译 APK (直接调 SDK 工具)
         run: |
-          set -e
+          set -ex
           export ANDROID_HOME=$HOME/android-sdk
+          echo "=== SDK 目录 ===" && ls -la $ANDROID_HOME/build-tools/33.0.2/
           BUILD_TOOLS=$ANDROID_HOME/build-tools/33.0.2
           PLATFORM=$ANDROID_HOME/platforms/android-33
           APP_DIR=android/app/src/main

@@ -6,9 +6,7 @@
     <application
         android:allowBackup="true"
         android:label="切水果"
-        android:icon="@mipmap/ic_launcher"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.FruitGame"
+        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
         android:usesCleartextTraffic="true">
 
         <activity
