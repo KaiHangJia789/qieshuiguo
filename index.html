@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="切水果">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1A0A2E">
+    <title>切水果</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="menuScreen" class="overlay">
+        <h1 class="game-title">🔪 切水果</h1>
+        <p class="game-subtitle">F R U I T  S L I C E</p>
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="classic">经典无尽</button>
+            <button class="mode-btn" data-mode="timed">限时挑战</button>
+            <button class="mode-btn" data-mode="levels">闯关模式</button>
+            <button class="mode-btn" data-mode="casual">休闲模式</button>
+        </div>
+        <div class="menu-buttons">
+            <button id="btnStart" class="btn btn-primary">开始游戏</button>
+            <button id="btnTutorial" class="btn btn-secondary">新手教程</button>
+            <button id="btnSettings" class="btn btn-secondary">设置</button>
+        </div>
+    </div>
+
+    <div id="hud" class="overlay hidden">
+        <div class="hud-top">
+            <div class="hud-left">
+                <span class="score-label">得分</span>
+                <span id="scoreDisplay">0</span>
+                <span id="bestDisplay">最高: 0</span>
+                <span id="modeLabel">经典无尽</span>
+            </div>
+            <div class="hud-center">
+                <div id="levelTarget" class="hidden">目标: 30 分</div>
+                <div class="level-progress-bar hidden" id="levelProgressBar"><div id="levelProgress"></div></div>
+                <div id="comboDisplay"></div>
+            </div>
+            <div class="hud-right">
+                <div id="livesDisplay"></div>
+                <div id="timerDisplay" class="hidden">60s</div>
+                <button id="btnPause" class="btn-pause">||</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pauseScreen" class="overlay hidden">
+        <h2 class="pause-title">暂停</h2>
+        <div class="pause-buttons">
+            <button id="btnResume" class="btn btn-primary">继续游戏</button>
+            <button id="btnRestartPause" class="btn btn-secondary">重新开始</button>
+            <button id="btnMenu" class="btn btn-secondary">返回菜单</button>
+        </div>
+    </div>
+
+    <div id="gameOverScreen" class="overlay hidden">
+        <h2 class="gameover-title">游戏结束</h2>
+        <div id="finalNewBest" class="hidden">新纪录！</div>
+        <div class="stats-grid">
+            <div class="stat-item"><div class="stat-label">得分</div><div class="stat-value highlight" id="finalScore">0</div></div>
+            <div class="stat-item"><div class="stat-label">最高分</div><div class="stat-value" id="finalBest">0</div></div>
+            <div class="stat-item"><div class="stat-label">用时</div><div class="stat-value" id="finalTime">0:00</div></div>
+            <div class="stat-item"><div class="stat-label">最大连击</div><div class="stat-value" id="finalCombo">0</div></div>
+        </div>
+        <div class="gameover-buttons">
+            <button id="btnPlayAgain" class="btn btn-primary">再来一局</button>
+            <button id="btnMenu2" class="btn btn-secondary">返回菜单</button>
+        </div>
+    </div>
+
+    <div id="settingsScreen" class="overlay hidden">
+        <h2 class="settings-title">设置</h2>
+        <div class="settings-content">
+            <div class="setting-group">
+                <div class="setting-label">音效</div>
+                <div class="setting-row"><button id="btnSoundToggle" class="btn btn-small btn-secondary">音效：开</button></div>
+            </div>
+            <div class="setting-group">
+                <div class="setting-label">音量</div>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.7">
+            </div>
+            <div class="setting-group">
+                <div class="setting-label">刀刃样式</div>
+                <div class="setting-row">
+                    <button class="skin-option active" data-skin="default">默认</button>
+                    <button class="skin-option" data-skin="fire">烈焰</button>
+                    <button class="skin-option" data-skin="ice">寒冰</button>
+                    <button class="skin-option" data-skin="thunder">雷电</button>
+                </div>
+            </div>
+            <div class="setting-group">
+                <div class="setting-label">画质</div>
+                <div class="setting-row">
+                    <button class="quality-option active" data-quality="high">高</button>
+                    <button class="quality-option" data-quality="medium">中</button>
+                    <button class="quality-option" data-quality="low">低</button>
+                </div>
+            </div>
+            <div class="setting-group"><button id="btnResetScore" class="btn btn-small btn-secondary">重置最高分</button></div>
+            <button id="btnCloseSettings" class="btn btn-primary">返回</button>
+        </div>
+    </div>
+
+    <div id="tutorialScreen" class="overlay hidden">
+        <h2 class="tutorial-title">新手教程</h2>
+        <div class="tutorial-content">
+            <div class="tutorial-step" data-step="1"><div class="tutorial-icon">👆</div><p class="tutorial-text">用鼠标或手指在屏幕上<b>滑动</b>，划出刀光</p></div>
+            <div class="tutorial-step hidden" data-step="2"><div class="tutorial-icon">🍉</div><p class="tutorial-text">用刀光<b>划过水果</b>即可切开得分！</p></div>
+            <div class="tutorial-step hidden" data-step="3"><div class="tutorial-icon">💣</div><p class="tutorial-text">小心<b>炸弹</b>！切到炸弹会立即结束游戏</p></div>
+            <div class="tutorial-step hidden" data-step="4"><div class="tutorial-icon">🔥</div><p class="tutorial-text"><b>连续切水果</b>触发连击，获得额外加分！</p></div>
+            <div class="tutorial-step hidden" data-step="5"><div class="tutorial-icon">❤️</div><p class="tutorial-text">不要漏掉水果，每次漏掉会<b>扣除一颗心</b></p></div>
+            <div class="tutorial-dots"><span>●</span><span>○</span><span>○</span><span>○</span><span>○</span></div>
+            <button id="btnCloseTutorial" class="btn btn-primary">准备好了！</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/blade.js"></script>
+    <script src="js/fruit.js"></script>
+    <script src="js/bomb.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
