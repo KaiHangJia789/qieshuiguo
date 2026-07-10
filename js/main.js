@@ -682,27 +682,7 @@ class Game {
 let game;
 
 function setupPWA() {
-    // manifest 用 data URI（兼容 file:// 打开的场景）
-    const manifestJSON = JSON.stringify({
-        name: '切水果',
-        short_name: '切水果',
-        display: 'standalone',
-        orientation: 'any',
-        background_color: '#0a0a1a',
-        theme_color: '#1A0A2E',
-        start_url: '.',
-        scope: '.',
-        icons: [{
-            src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="#1A0A2E"/><text x="96" y="96" text-anchor="middle" dominant-baseline="central" font-size="80">🍉</text></svg>'),
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-        }]
-    });
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = 'data:application/json;base64,' + btoa(unescape(encodeURIComponent(manifestJSON)));
-    document.head.appendChild(link);
+    // 静态 manifest.json 已在 index.html 中引用
 
     // 注册 Service Worker（HTTPS 下触发 PWA 安装的关键）
     if ('serviceWorker' in navigator && location.protocol === 'https:') {

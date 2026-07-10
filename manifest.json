@@ -1,0 +1,19 @@
+{
+  "name": "切水果",
+  "short_name": "切水果",
+  "description": "趣味切水果小游戏",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a1a",
+  "theme_color": "#1A0A2E",
+  "start_url": ".",
+  "scope": ".",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
