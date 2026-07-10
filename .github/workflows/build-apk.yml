@@ -1,4 +1,4 @@
-name: 编译 APK
+name: 编译APK
 
 on:
   push:
@@ -11,37 +11,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Java
+      - name: 设置 Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 设置 Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: 设置 Android SDK
+      - name: 安装 Android SDK
         run: |
-          mkdir -p ~/android-sdk/cmdline-tools
-          cd ~/android-sdk/cmdline-tools
-          curl -sL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o tools.zip
-          unzip -qo tools.zip
-          mv cmdline-tools latest 2>/dev/null || true
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          ANDROID_SDK_ROOT=$HOME/android-sdk
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
-      - name: 安装 Android SDK 组件
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          curl -sLO https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -qo commandlinetools-linux-11076708_latest.zip
+          # The zip extracts to cmdline-tools/ directory
+          if [ -d cmdline-tools ]; then
+            mv cmdline-tools latest
+          fi
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+      - name: 安装 SDK 包
         run: |
-          yes | sdkmanager --licenses 2>/dev/null || true
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
-      - name: 编译 Debug APK
+      - name: 编译 APK
         working-directory: android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle assembleDebug
+          # Create Gradle wrapper if not present
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.5 2>/dev/null || {
+              curl -sL https://services.gradle.org/distributions/gradle-8.5-bin.zip -o /tmp/gradle.zip
+              unzip -qo /tmp/gradle.zip -d /tmp
+              /tmp/gradle-8.5/bin/gradle wrapper --gradle-version 8.5
+            }
+          fi
+          ./gradlew assembleDebug
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
