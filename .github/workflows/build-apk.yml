@@ -29,22 +29,23 @@ jobs:
           mv cmdline-tools latest
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
       - name: 安装 Gradle
         run: |
-          curl -sL https://services.gradle.org/distributions/gradle-8.5-bin.zip -o /tmp/gradle.zip
+          curl -sL https://services.gradle.org/distributions/gradle-8.4-bin.zip -o /tmp/gradle.zip
           sudo mkdir -p /opt/gradle
           sudo unzip -qo /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-8.5/bin" >> $GITHUB_PATH
+          echo "/opt/gradle/gradle-8.4/bin" >> $GITHUB_PATH
 
       - name: 编译 Debug APK
         run: |
           cd android
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace
 
       - name: 上传 APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 切水果-APK
