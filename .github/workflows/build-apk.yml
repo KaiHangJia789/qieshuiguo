@@ -20,7 +20,9 @@ jobs:
 
       - name: 安装 Android SDK
         run: |
-          export ANDROID_HOME=$HOME/android-sdk
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
@@ -31,21 +33,62 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
-      - name: 安装 Gradle
+      - name: 编译 APK (直接调 SDK 工具)
         run: |
-          curl -sL https://services.gradle.org/distributions/gradle-8.4-bin.zip -o /tmp/gradle.zip
-          sudo mkdir -p /opt/gradle
-          sudo unzip -qo /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-8.4/bin" >> $GITHUB_PATH
+          set -e
+          export ANDROID_HOME=$HOME/android-sdk
+          BUILD_TOOLS=$ANDROID_HOME/build-tools/33.0.2
+          PLATFORM=$ANDROID_HOME/platforms/android-33
+          APP_DIR=android/app/src/main
+          BUILD_DIR=android/app/build
+          rm -rf $BUILD_DIR && mkdir -p $BUILD_DIR/classes $BUILD_DIR/apk
 
-      - name: 编译 Debug APK
-        run: |
-          cd android
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle assembleDebug --stacktrace
+          # 1. 编译资源
+          $BUILD_TOOLS/aapt2 compile -o $BUILD_DIR/res.zip \
+            --dir $APP_DIR/res \
+            -I $PLATFORM/android.jar
+
+          # 2. 链接资源生成 R.java 和 APK
+          $BUILD_TOOLS/aapt2 link -o $BUILD_DIR/apk/base.apk \
+            -I $PLATFORM/android.jar \
+            --manifest $APP_DIR/AndroidManifest.xml \
+            --java $BUILD_DIR/classes \
+            $BUILD_DIR/res.zip \
+            --auto-add-overlay
+
+          # 3. 编译 Java
+          javac -source 1.8 -target 1.8 \
+            -cp $PLATFORM/android.jar \
+            -d $BUILD_DIR/classes \
+            $BUILD_DIR/classes/com/fruitgame/app/R.java \
+            $APP_DIR/java/com/fruitgame/app/MainActivity.java
+
+          # 4. DEX
+          $BUILD_TOOLS/d8 --lib $PLATFORM/android.jar \
+            --output $BUILD_DIR/apk/ \
+            $BUILD_DIR/classes/com/fruitgame/app/*.class
+
+          # 5. 合并 DEX 到 APK
+          cd $BUILD_DIR/apk
+          $BUILD_TOOLS/aapt2 add base.apk classes.dex
+
+          # 6. 签名 (debug key)
+          keytool -genkey -v -keystore debug.keystore -alias debug \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Unknown" 2>/dev/null || true
+
+          $BUILD_TOOLS/apksigner sign \
+            --ks debug.keystore \
+            --ks-pass pass:android \
+            --out fruit-game.apk \
+            base.apk
+
+          mkdir -p ../outputs/apk/debug
+          cp fruit-game.apk ../outputs/apk/debug/
+          echo "APK 编译成功: $(ls -la ../outputs/apk/debug/)"
 
       - name: 上传 APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 切水果-APK
